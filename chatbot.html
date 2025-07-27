@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Advanced Rule-Based Chatbot</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: url('Art.gif') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+  }
+  .chat-container {
+    width: 100%;
+    max-width: 600px;
+    height: 600px;
+    background: rgba(255 255 255 / 0.1);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    backdrop-filter: blur(12px);
+  }
+  .chat-header {
+    padding: 20px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255 255 255 / 0.2);
+  }
+  .chat-messages {
+    flex: 1;
+    padding: 12px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .message {
+    max-width: 70%;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border-radius: 20px;
+    line-height: 1.3;
+    font-size: 1rem;
+    word-wrap: break-word;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+  }
+  .message.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .message.bot {
+    align-self: flex-start;
+    background: linear-gradient(135deg, #43cea2, #185a9d);
+    color: #fff;
+    border-bottom-left-radius: 4px;
+  }
+  .chat-input-area {
+    border-top: 1px solid rgba(255 255 255 / 0.2);
+    padding: 15px 20px;
+    display: flex;
+    background: rgba(255 255 255 / 0.05);
+    border-radius: 0 0 16px 16px;
+  }
+  #chat-input {
+    flex: 1;
+    padding: 12px 18px;
+    border-radius: 24px;
+    border: none;
+    font-size: 1rem;
+    outline: none;
+    background: rgba(255 255 255 / 0.15);
+    color: #fff;
+    transition: background 0.3s ease;
+  }
+  #chat-input::placeholder {
+    color: #ddd;
+  }
+  #chat-input:focus {
+    background: rgba(255 255 255 / 0.3);
+  }
+  #send-btn {
+    margin-left: 15px;
+    background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+    box-shadow: 0 4px 10px rgb(255 126 95 / 0.6);
+  }
+  #send-btn:hover {
+    background: linear-gradient(135deg, #feb47b, #ff7e5f);
+  }
+  /* Scrollbar styling */
+  .chat-messages::-webkit-scrollbar {
+    width: 8px;
+  }
+  .chat-messages::-webkit-scrollbar-track {
+    background: rgba(255 255 255 / 0.1);
+    border-radius: 4px;
+  }
+  .chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(255 255 255 / 0.3);
+    border-radius: 4px;
+  }
+
+</style>
+</head>
+<body>
+  <div class="chat-container" role="region" aria-label="Chatbot">
+    <header class="chat-header">Chatbot - Advanced Rule Based AI</header>
+    <main class="chat-messages" id="chat-messages" aria-live="polite" aria-relevant="additions"></main>
+    <form class="chat-input-area" id="chat-form" aria-label="Send message">
+      <input
+        id="chat-input"
+        type="text"
+        placeholder="Type your message..."
+        autocomplete="off"
+        aria-required="true"
+        aria-label="Message input"
+        autofocus
+      />
+      <button id="send-btn" type="submit" aria-label="Send message">&#9658;</button>
+    </form>
+    <footer>-------------RULE-BASED Chatbot Created By Anmol Singh--------------</footer>
+  </div>
+
+<script>
+  class AdvancedRuleBasedChatbot {
+    constructor() {
+        this.user_name = null;
+        this.previous_user_input = null;
+        this.greeted = false;
+        this.responses = {
+            'greeting': [
+                "Hello! How can I assist you today?",
+                "Hi there! What can I do for you?",
+                "Hey! How's your day going?",
+                "Greetings! Need any help?"
+            ],
+            'name': [
+                "I'm Chatbot, your virtual assistant.",
+                "You can call me Chatbot, at your service!",
+                "I'm a simple yet advanced chatbot created to assist you."
+            ],
+            'how_are_you': [
+                "I'm doing great, thanks for asking! How about you?",
+                "All systems operational! How do you feel today?",
+                "I'm here to help, so feeling productive!"
+            ],
+            'weather': [
+                "I am not able to check real-time weather, but I hope it's sunny where you are.",
+                "Weather? Sorry, I don't have access to that info yet."
+            ],
+            'time': [
+                "The current time is {time}."
+            ],
+            'thank_you': [
+                "You're welcome! Happy to help.",
+                "No problem at all!",
+                "Anytime. Feel free to ask more."
+            ],
+            'farewell': [
+                "Goodbye! Take care!",
+                "See you next time!",
+                "Farewell! Have a wonderful day!"
+            ],
+            'fallback': [
+                "Sorry, I didn't quite get that. Could you please rephrase?",
+                "Hmm, I'm not sure I understand. Can you ask differently?",
+                "I'm here to help, but I need you to be a bit clearer."
+            ],
+            'feeling_bad': [
+                "I'm sorry you're feeling down. Remember, every day is a new chance.",
+                "It's okay to have bad days. If you want to talk, I'm here."
+            ],
+            'feeling_good': [
+                "That's great to hear! Keep the positive vibes going!",
+                "Awesome! I'm glad you're feeling good."
+            ]
+        };
+    }
+
+    get_time_based_greeting() {
+        const currentHour = new Date().getHours();
+        if (5 <= currentHour && currentHour < 12) {
+            return "Good morning! ";
+        } else if (12 <= currentHour && currentHour < 18) {
+            return "Good afternoon! ";
+        } else if (18 <= currentHour && currentHour < 22) {
+            return "Good evening! ";
+        } else {
+            return "";
+        }
+    }
+
+    preprocess(message) {
+        message = message.toLowerCase().trim();
+        return message.replace(/[^\w\s]/g, ''); // remove punctuation
+    }
+
+    detect_intent(message) {
+        const greetings = /\b(hi|hello|hey|howdy|greetings|good morning|good afternoon|good evening|hola)\b/;
+        const name_query = /your name|who are you/;
+        const how_are_you = /how are you|how r u|how you doing/;
+        const weather = /weather/;
+        const time_query = /time/;
+        const thank = /thank|thanks/;
+        const farewell = /bye|goodbye|see you|quit|exit/;
+        const feeling_good_words = /\b(good|great|happy|fantastic|awesome|fine|well|nice)\b/;
+        const feeling_bad_words = /\b(bad|sad|unhappy|not good|terrible|depressed|tired|sick)\b/;
+
+        if (greetings.test(message)) {
+            return 'greeting';
+        } else if (name_query.test(message)) {
+            return 'name';
+        } else if (how_are_you.test(message)) {
+            return 'how_are_you';
+        } else if (weather.test(message)) {
+            return 'weather';
+        } else if (time_query.test(message)) {
+            return 'time';
+        } else if (thank.test(message)) {
+            return 'thank_you';
+        } else if (farewell.test(message)) {
+            return 'farewell';
+        } else if (feeling_good_words.test(message)) {
+            return 'feeling_good';
+        } else if (feeling_bad_words.test(message)) {
+            return 'feeling_bad';
+        } else {
+            return 'fallback';
+        }
+    }
+
+    respond(message) {
+        const clean_msg = this.preprocess(message);
+
+        if (clean_msg === this.previous_user_input) {
+            return "You've already said that. Ask me something else!";
+        }
+
+        this.previous_user_input = clean_msg;
+
+        const intent = this.detect_intent(clean_msg);
+        let response;
+
+        if (intent === 'time') {
+            response = this.responses[intent][0].replace("{time}", new Date().toLocaleTimeString());
+        } else {
+            response = this.responses[intent][Math.floor(Math.random() * this.responses[intent].length)];
+        }
+
+        if (intent === 'greeting') {
+            if (!this.greeted) {
+                const time_greeting = this.get_time_based_greeting();
+                response = time_greeting + response;
+                this.greeted = true;
+            }
+        }
+        return response;
+    }
+}
+
+const bot = new AdvancedRuleBasedChatbot();
+
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+const chatMessages = document.getElementById('chat-messages');
+
+function appendMessage(content, sender) {
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('message', sender);
+    msgDiv.textContent = content;
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+chatForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const userInput = chatInput.value;
+    if (!userInput.trim()) return;
+
+    appendMessage(userInput, 'user');
+    chatInput.value = '';
+
+    setTimeout(() => {
+        const botReply = bot.respond(userInput);
+        appendMessage(botReply, 'bot');
+    }, 600);
+});
+
+// Greet the user on load
+window.onload = () => {
+    appendMessage("Hello! I'm your chatbot how can I help you.", 'bot');
+    chatInput.focus();
+};
+</script>
+</body>
+</html>
